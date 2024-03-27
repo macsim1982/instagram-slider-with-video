@@ -1,0 +1,162 @@
+body {
+  font-family: sans-serif;
+}
+
+.container-wrapper {
+  display: flex;
+  justify-content: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  background: black;
+}
+
+.container {
+  position: relative;
+  overflow: hidden;
+}
+
+.item {
+  cursor: pointer;
+  position: absolute;
+  color: white;
+  left: 50%;
+  top: 50px;
+  aspect-ratio: 4 / 7;
+  height: calc(100vh - 100px);
+  padding: 20px;
+  box-sizing: border-box;
+  transform: translateX(-50%);
+  transform-origin: center center;
+  will-change: transform, opacity;
+  opacity: 0.8;
+  overflow: hidden;
+  border-radius: 1rem;
+}
+
+.item--model {
+  background: transparent;
+  opacity: 0;
+  left: -100%;
+}
+
+.item--current {
+  opacity: 1;
+}
+
+.content {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 1;
+  transition: transform 600ms ease, opacity 600ms ease;
+  will-change: transform, opacity;
+  border-radius: calc(1rem / 0.45);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.infos {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.rounded {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px #33dd33;
+  padding: 2px;
+  background: white;
+  margin-bottom: 10px;
+  background: content-box;
+}
+
+.content--current {
+  opacity: 1;
+  background-color: #444;
+  border-radius: 1rem;
+}
+
+.content--current {
+  opacity: 0;
+  transform: scale(calc(1 / 0.45));
+}
+
+.item--current .content--current {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.item--current .content:not(.content--current) {
+  opacity: 0;
+  transform: scale(1);
+}
+
+.no-scale {
+  transition: transform 600ms ease;
+  transform-origin: left top;
+  will-change: transform;
+  transform: scale(1) translate(-50%, -100%);
+}
+
+.item:not(.item--current) .no-scale {
+  transform: scale(calc(1 / 0.45)) translate(-50%, -50%);
+}
+
+.steps {
+  position: fixed;
+  top: 20px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  will-change: opacity, transform;
+  transition: transform 600ms ease, opacity 600ms ease;
+}
+
+.progress {
+  display: flex;
+  background: #bbb;
+  flex: 1 0 0;
+  margin: 0 0.4rem;
+}
+
+.current {
+  height: 4px;
+  background: white;
+}
+
+.image {
+  display: block;
+  position: relative;
+  height: 100%;
+  aspect-ratio: 4 / 7;
+}
+
+.thumbnail {
+  display: block;
+  aspect-ratio: 1;
+  width: 100%;
+  border-radius: 50%;
+}
+
+video {
+  object-fit: cover;
+}
