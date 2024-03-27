@@ -31,7 +31,7 @@ npm run start
 * Github: [@macsim1982](https://github.com/macsim1982)
 
 ## Demo
-You can check the [demo](https://instagram-slider-with-video)
+You can check the [demo](https://insta-slider-with-video.vercel.app/)
 ## Show your support
 
 Give a ⭐️ if this project helped you!
