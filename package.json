@@ -1,21 +1,19 @@
 {
   "name": "instagram-slider-with-video",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.html",
+  "description": "A vanilla javascript like instagram slider focused on webperf without any layout shift (excepted for video when playing but there no way to avoid it).",
   "scripts": {
     "start": "parcel index.html --open",
     "build": "parcel build index.html"
   },
   "dependencies": {
     "lit-html": "1.4.1",
-    "rematrix": "0.7.2"
+    "rematrix": "0.7.2",
+    "vanilla-touchswipe": "^0.0.1"
   },
   "devDependencies": {
-    "@babel/core": "7.2.0"
-  },
-  "resolutions": {
-    "@babel/preset-env": "7.13.8"
+    "@parcel/core": "^2.11.0",
+    "parcel": "^2.11.0"
   },
   "keywords": []
 }
