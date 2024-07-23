@@ -13,7 +13,7 @@ let borderRadius = 0.5;
 
 const el = document.querySelector(".container");
 const model = document.querySelector(".item--model");
-const zones = [...new Array(delta * 2 + 1)].map((_) => []);
+const transforms = [...new Array(delta * 2 + 1)].map((_) => []);
 let transitionEnd = null;
 
 function onClick(e) {
@@ -35,9 +35,9 @@ function goto(pos, duration = 0) {
   const items = data.items
     .map(({ style = {}, classList = {}, ...item }, index) => {
       const isCurrent = pos === index;
-      console.log("visibleIndex", index + delta - pos, index, pos);
+      // console.log("visibleIndex", index + delta - pos, index, pos);
 
-      if (zones[index + delta - pos]) {
+      if (transforms[index + delta - pos]) {
         classList = {
           ...classList,
           item: true,
@@ -46,13 +46,13 @@ function goto(pos, duration = 0) {
 
         style = {
           ...style,
-          transform: toString(zones[index + delta - pos]),
+          transform: toString(transforms[index + delta - pos]),
           transition:
             duration > 0
               ? `transform ${duration}ms ease, opacity ${duration}ms ease, border-radius ${duration}ms ease`
               : "none",
           borderRadius:
-            pos === index ? `${borderRadius}rem` : `${borderRadius / 0.45}rem`,
+            pos === index ? `${borderRadius}rem` : `${borderRadius / scaleValue}rem`,
         };
       }
 
@@ -81,16 +81,16 @@ function goto(pos, duration = 0) {
   }, duration);
 }
 
-function recalculateZones() {
+function recalculateTransforms() {
   if (el && model) {
     el.style.width = `${Math.floor(
       model.offsetWidth +
         margin +
         (model.offsetWidth * scaleValue + margin) * delta
     )}px`;
-    zones.forEach((_, index) => {
+    transforms.forEach((_, index) => {
       const transform = getComputedStyle(model).transform;
-      zones[index] = [
+      transforms[index] = [
         fromString(transform),
         translate(model, index - delta),
         scale(index === delta ? 1 : scaleValue),
@@ -100,7 +100,7 @@ function recalculateZones() {
 }
 
 function init() {
-  recalculateZones();
+  recalculateTransforms();
 
   goto(current, 0);
 }
