@@ -1,15 +1,16 @@
 <h1 align="center">Welcome to Infinite horizontal slider - webperf animated</h1>
 
 > A vanilla javascript like instagram slider focused on webperf without any layout shift (excepted for video when playing but there no way to avoid it).
-* To perform animations, I am using rematrix to get current transform style and update throught matrix operations. 
-* To perform the DOm manipulation, I used lit-html to duo Shadow DOM manipulations before update DOM elements.
-* If a slider contains more than 1000 elements, only visible and near visible are really presents as DOM Elements.
 
+* To perform animations, I am using rematrix to get current transform style and update through matrix operations.
+* To perform the DOM manipulation, I used lit-html for efficient incremental DOM updates (not Shadow DOM).
+* For large lists, only visible and near-visible slides are present as DOM elements (windowed rendering).
+* Swipe left/right (touch or mouse) and arrow keys navigate between slides.
 
 ## Install
 
 ```sh
-npm run install
+npm install
 ```
 
 ## Run dev mode
@@ -21,7 +22,7 @@ npm run start
 ## Run build mode
 
 ```sh
-npm run start
+npm run build
 ```
 
 ## Author
