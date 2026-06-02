@@ -2,6 +2,13 @@ import { html } from "lit-html";
 import { classMap } from "lit-html/directives/class-map";
 import { styleMap } from "lit-html/directives/style-map";
 
+function videoMimeType(source) {
+  const extension = source.split("?")[0].split(".").pop()?.toLowerCase();
+  if (extension === "webm") return "video/webm";
+  if (extension === "ogg" || extension === "ogv") return "video/ogg";
+  return "video/mp4";
+}
+
 export function tplSlide({
   id,
   index,
@@ -23,7 +30,8 @@ export function tplSlide({
       <div class="image">
         <video muted id="${id}" width="100%" height="100%" poster="${thumb}">
           ${sources.map(
-            (source) => html`<source src="${source}" type="video/webm" />`
+            (source) =>
+              html`<source src="${source}" type="${videoMimeType(source)}" />`
           )}
           Sorry, your browser doesn't support embedded videos.
         </video>
@@ -48,7 +56,7 @@ export function tplSlide({
         <div class="rounded">
           <img
             class="thumbnail"
-            src="//picsum.photos/100/100?random=${index}"
+            src="https://picsum.photos/100/100?random=${index}"
           />
         </div>
 
