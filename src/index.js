@@ -11,10 +11,12 @@ let margin = 2;
 let current = 0;
 let transitionDuration = 600;
 let borderRadius = 0.5;
+let loop = false;
 
 const el = document.querySelector(".container");
 const model = document.querySelector(".item--model");
 const swipeTarget = document.querySelector(".container-wrapper");
+const loopToggle = document.getElementById("loop-toggle");
 const transforms = [...new Array(delta * 2 + 1)];
 let transformsReady = false;
 let transitionEnd = null;
@@ -28,8 +30,25 @@ function motionDuration(duration) {
   return prefersReducedMotion.matches ? 0 : duration;
 }
 
-function clampIndex(pos) {
-  return Math.max(0, Math.min(pos, data.items.length - 1));
+function itemCount() {
+  return data.items.length;
+}
+
+function readLoopOption() {
+  const attr = el?.dataset?.loop;
+  if (attr !== undefined) {
+    return attr !== "false";
+  }
+  return Boolean(data.loop);
+}
+
+function normalizeIndex(pos) {
+  const count = itemCount();
+  if (count === 0) return 0;
+  if (loop) {
+    return ((pos % count) + count) % count;
+  }
+  return Math.max(0, Math.min(pos, count - 1));
 }
 
 function syncCssVariables() {
@@ -54,16 +73,20 @@ function translate(element, index = 0) {
 }
 
 function goto(pos, duration = 0) {
-  current = clampIndex(pos);
+  current = normalizeIndex(pos);
 
-  const start = Math.max(0, current - delta);
-  const end = Math.min(data.items.length - 1, current + delta);
   const items = [];
 
-  for (let index = start; index <= end; index++) {
+  for (let offset = -delta; offset <= delta; offset++) {
+    const rawIndex = current + offset;
+    if (!loop && (rawIndex < 0 || rawIndex >= itemCount())) {
+      continue;
+    }
+
+    const index = loop ? normalizeIndex(rawIndex) : rawIndex;
+    const slot = offset + delta;
     const { style = {}, classList = {}, ...item } = data.items[index];
     const isCurrent = current === index;
-    const slot = index + delta - current;
     let nextClassList = classList;
     let nextStyle = style;
 
@@ -88,10 +111,16 @@ function goto(pos, duration = 0) {
       };
     }
 
-    items.push({ ...item, classList: nextClassList, style: nextStyle, onClick });
+    items.push({
+      ...item,
+      repeatKey: `${item.id}@${slot}`,
+      classList: nextClassList,
+      style: nextStyle,
+      onClick,
+    });
   }
 
-  render(repeat(items, (item) => item.id, tplSlide), el);
+  render(repeat(items, (item) => item.repeatKey, tplSlide), el);
 
   const videos = el.querySelectorAll("video");
 
@@ -107,6 +136,10 @@ function goto(pos, duration = 0) {
     );
     currentVideo?.play()?.catch(() => {});
   }, duration);
+}
+
+function step(direction) {
+  goto(current + direction, motionDuration(transitionDuration));
 }
 
 function recalculateTransforms() {
@@ -128,7 +161,24 @@ function recalculateTransforms() {
   }
 }
 
+export function configure(options = {}) {
+  if (options.loop !== undefined) {
+    loop = Boolean(options.loop);
+    if (loopToggle) {
+      loopToggle.checked = loop;
+    }
+    if (el) {
+      el.dataset.loop = loop ? "true" : "false";
+    }
+    goto(current, 0);
+  }
+}
+
 function init() {
+  loop = readLoopOption();
+  if (loopToggle) {
+    loopToggle.checked = loop;
+  }
   syncCssVariables();
   recalculateTransforms();
   goto(current, 0);
@@ -137,17 +187,17 @@ function init() {
 function onKeyDown(e) {
   if (e.key === "ArrowLeft") {
     e.preventDefault();
-    goto(current - 1, motionDuration(transitionDuration));
+    step(-1);
   } else if (e.key === "ArrowRight") {
     e.preventDefault();
-    goto(current + 1, motionDuration(transitionDuration));
+    step(1);
   }
 }
 
 if (swipeTarget) {
   onTouchSwipe(swipeTarget, {
-    left: () => goto(current - 1, motionDuration(transitionDuration)),
-    right: () => goto(current + 1, motionDuration(transitionDuration)),
+    left: () => step(-1),
+    right: () => step(1),
   });
 }
 
@@ -155,6 +205,12 @@ if (el) {
   el.setAttribute("tabindex", "0");
   el.setAttribute("role", "list");
   el.setAttribute("aria-label", "Stories");
+}
+
+if (loopToggle) {
+  loopToggle.addEventListener("change", () => {
+    configure({ loop: loopToggle.checked });
+  });
 }
 
 document.addEventListener("keydown", onKeyDown);
