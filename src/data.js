@@ -1,4 +1,6 @@
 export const data = {
+  /** When true, next/prev wrap from last slide to first and vice versa. */
+  loop: false,
   items: [
     {
       id: "item-1",

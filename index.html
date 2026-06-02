@@ -1,15 +1,20 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Parcel Sandbox</title>
+    <title>Instagram-style story slider</title>
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="src/styles.css" />
   </head>
 
   <body>
+    <label class="loop-toggle">
+      <input type="checkbox" id="loop-toggle" />
+      Infinite loop
+    </label>
+
     <div class="container-wrapper">
       <div class="item item--model"></div>
-      <div class="container"></div>
+      <div class="container" data-loop="false"></div>
     </div>
 
     <script src="src/index.js" type="module"></script>

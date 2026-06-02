@@ -1,3 +1,8 @@
+:root {
+  --slide-scale: 0.45;
+  --slide-border-radius: 1rem;
+}
+
 body {
   font-family: sans-serif;
 }
@@ -17,6 +22,11 @@ body {
 .container {
   position: relative;
   overflow: hidden;
+  outline: none;
+}
+
+.container:focus-visible {
+  box-shadow: 0 0 0 2px #33dd33;
 }
 
 .item {
@@ -34,7 +44,7 @@ body {
   will-change: transform, opacity;
   opacity: 0.8;
   overflow: hidden;
-  border-radius: 1rem;
+  border-radius: var(--slide-border-radius);
 }
 
 .item--model {
@@ -56,13 +66,30 @@ body {
   opacity: 1;
   transition: transform 600ms ease, opacity 600ms ease;
   will-change: transform, opacity;
-  border-radius: calc(1rem / 0.45);
+  border-radius: calc(var(--slide-border-radius) / var(--slide-scale));
 
   display: flex;
   justify-content: center;
   align-items: center;
   background: rgba(0, 0, 0, 0.5);
   overflow: hidden;
+}
+
+.content--current {
+  opacity: 0;
+  transform: scale(calc(1 / var(--slide-scale)));
+  background-color: #444;
+  border-radius: var(--slide-border-radius);
+}
+
+.item--current .content--current {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.item--current .content:not(.content--current) {
+  opacity: 0;
+  transform: scale(1);
 }
 
 .infos {
@@ -87,27 +114,6 @@ body {
   background: content-box;
 }
 
-.content--current {
-  opacity: 1;
-  background-color: #444;
-  border-radius: 1rem;
-}
-
-.content--current {
-  opacity: 0;
-  transform: scale(calc(1 / 0.45));
-}
-
-.item--current .content--current {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.item--current .content:not(.content--current) {
-  opacity: 0;
-  transform: scale(1);
-}
-
 .no-scale {
   transition: transform 600ms ease;
   transform-origin: left top;
@@ -116,7 +122,7 @@ body {
 }
 
 .item:not(.item--current) .no-scale {
-  transform: scale(calc(1 / 0.45)) translate(-50%, -50%);
+  transform: scale(calc(1 / var(--slide-scale))) translate(-50%, -50%);
 }
 
 .steps {
@@ -159,4 +165,31 @@ body {
 
 video {
   object-fit: cover;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item,
+  .content,
+  .no-scale,
+  .steps {
+    transition: none !important;
+  }
+}
+
+.loop-toggle {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  font-size: 0.875rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.loop-toggle input {
+  cursor: pointer;
 }
