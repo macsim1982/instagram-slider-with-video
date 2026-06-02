@@ -111,16 +111,10 @@ function goto(pos, duration = 0) {
       };
     }
 
-    items.push({
-      ...item,
-      repeatKey: `${item.id}@${slot}`,
-      classList: nextClassList,
-      style: nextStyle,
-      onClick,
-    });
+    items.push({ ...item, classList: nextClassList, style: nextStyle, onClick });
   }
 
-  render(repeat(items, (item) => item.repeatKey, tplSlide), el);
+  render(repeat(items, (item) => item.id, tplSlide), el);
 
   const videos = el.querySelectorAll("video");
 
