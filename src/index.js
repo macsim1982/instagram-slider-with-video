@@ -21,6 +21,12 @@ const transforms = [...new Array(delta * 2 + 1)];
 let transformsReady = false;
 let transitionEnd = null;
 let resizeTimer = null;
+let isDragging = false;
+let dragOffsetPx = 0;
+let moveRaf = 0;
+
+const SWIPE_COMMIT_RATIO = 0.25;
+const DRAG_RUBBER_BAND = 0.35;
 
 const prefersReducedMotion = window.matchMedia(
   "(prefers-reduced-motion: reduce)"
@@ -59,6 +65,23 @@ function syncCssVariables() {
   );
 }
 
+function slideStride() {
+  if (!model) return 100;
+  return model.offsetWidth * scaleValue + margin;
+}
+
+function canStep(direction) {
+  if (loop) return true;
+  return direction > 0 ? current < itemCount() - 1 : current > 0;
+}
+
+function clampDragOffset(px) {
+  if (loop) return px;
+  if (current === 0 && px > 0) return px * DRAG_RUBBER_BAND;
+  if (current === itemCount() - 1 && px < 0) return px * DRAG_RUBBER_BAND;
+  return px;
+}
+
 function onClick(e) {
   goto(parseInt(e.currentTarget.dataset.index, 10), motionDuration(transitionDuration));
 }
@@ -72,8 +95,9 @@ function translate(element, index = 0) {
   );
 }
 
-function goto(pos, duration = 0) {
+function goto(pos, duration = 0, dragPx = 0) {
   current = normalizeIndex(pos);
+  const appliedDrag = clampDragOffset(dragPx);
 
   const items = [];
 
@@ -91,19 +115,25 @@ function goto(pos, duration = 0) {
     let nextStyle = style;
 
     if (transformsReady && slot >= 0 && slot < transforms.length) {
+      const matrix =
+        appliedDrag !== 0
+          ? multiply(transforms[slot], translateX(appliedDrag))
+          : transforms[slot];
+
       nextClassList = {
         ...classList,
         item: true,
         "item--current": !!isCurrent,
       };
 
+      const animate = duration > 0 && !isDragging;
+
       nextStyle = {
         ...style,
-        transform: toString(transforms[slot]),
-        transition:
-          duration > 0
-            ? `transform ${duration}ms ease, opacity ${duration}ms ease, border-radius ${duration}ms ease`
-            : "none",
+        transform: toString(matrix),
+        transition: animate
+          ? `transform ${duration}ms ease, opacity ${duration}ms ease, border-radius ${duration}ms ease`
+          : "none",
         borderRadius:
           current === index
             ? `${borderRadius}rem`
@@ -120,6 +150,10 @@ function goto(pos, duration = 0) {
 
   [...videos].filter(({ paused }) => !paused).forEach((video) => video.pause());
 
+  if (isDragging) {
+    return;
+  }
+
   if (transitionEnd) {
     clearTimeout(transitionEnd);
   }
@@ -130,6 +164,20 @@ function goto(pos, duration = 0) {
     );
     currentVideo?.play()?.catch(() => {});
   }, duration);
+}
+
+function finishDrag(deltaX) {
+  isDragging = false;
+  dragOffsetPx = 0;
+  const threshold = slideStride() * SWIPE_COMMIT_RATIO;
+
+  if (deltaX < -threshold && canStep(1)) {
+    step(1);
+  } else if (deltaX > threshold && canStep(-1)) {
+    step(-1);
+  } else {
+    goto(current, motionDuration(transitionDuration));
+  }
 }
 
 function step(direction) {
@@ -190,8 +238,32 @@ function onKeyDown(e) {
 
 if (swipeTarget) {
   onTouchSwipe(swipeTarget, {
-    left: () => step(-1),
-    right: () => step(1),
+    start: () => {
+      isDragging = true;
+      dragOffsetPx = 0;
+      if (transitionEnd) {
+        clearTimeout(transitionEnd);
+        transitionEnd = null;
+      }
+    },
+    move: (deltaX) => {
+      if (!isDragging) return;
+      dragOffsetPx = deltaX;
+      cancelAnimationFrame(moveRaf);
+      moveRaf = requestAnimationFrame(() => {
+        goto(current, 0, dragOffsetPx);
+      });
+    },
+    end: (deltaX) => {
+      cancelAnimationFrame(moveRaf);
+      finishDrag(typeof deltaX === "number" ? deltaX : dragOffsetPx);
+    },
+    cancel: () => {
+      cancelAnimationFrame(moveRaf);
+      isDragging = false;
+      dragOffsetPx = 0;
+      goto(current, motionDuration(transitionDuration));
+    },
   });
 }
 
