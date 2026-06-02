@@ -95,6 +95,50 @@ function translate(element, index = 0) {
   );
 }
 
+function lerpMatrix(a, b, t) {
+  return a.map((value, index) => value + (b[index] - value) * t);
+}
+
+function transformForSlot(slot) {
+  if (!model) {
+    return transforms[delta];
+  }
+  return [
+    fromString(getComputedStyle(model).transform),
+    translate(model, slot - delta),
+    scale(slot === delta ? 1 : scaleValue),
+  ].reduce(multiply);
+}
+
+function getDragState(dragPx) {
+  const stride = slideStride();
+  const applied = clampDragOffset(dragPx);
+  let next = 0;
+  let prev = 0;
+
+  if (applied < 0) {
+    const raw = Math.min(1, -applied / stride);
+    next = canStep(1) ? raw : raw * DRAG_RUBBER_BAND;
+  } else if (applied > 0) {
+    const raw = Math.min(1, applied / stride);
+    prev = canStep(-1) ? raw : raw * DRAG_RUBBER_BAND;
+  }
+
+  return { next, prev, focus: next - prev };
+}
+
+function matrixForSlot(slot, dragPx) {
+  const { next, prev } = getDragState(dragPx);
+
+  if (next > 0) {
+    return lerpMatrix(transformForSlot(slot), transformForSlot(slot - 1), next);
+  }
+  if (prev > 0) {
+    return lerpMatrix(transformForSlot(slot), transformForSlot(slot + 1), prev);
+  }
+  return transforms[slot];
+}
+
 function goto(pos, duration = 0, dragPx = 0) {
   current = normalizeIndex(pos);
   const appliedDrag = clampDragOffset(dragPx);
@@ -115,29 +159,37 @@ function goto(pos, duration = 0, dragPx = 0) {
     let nextStyle = style;
 
     if (transformsReady && slot >= 0 && slot < transforms.length) {
+      const dragState = getDragState(appliedDrag);
       const matrix =
         appliedDrag !== 0
-          ? multiply(transforms[slot], translateX(appliedDrag))
+          ? matrixForSlot(slot, appliedDrag)
           : transforms[slot];
+      const focus = dragState.focus;
+      const distFromFocus = Math.abs(offset - focus);
+      const isFocused = distFromFocus < 0.5;
 
       nextClassList = {
         ...classList,
         item: true,
-        "item--current": !!isCurrent,
+        "item--current": isDragging ? isFocused : !!isCurrent,
       };
 
       const animate = duration > 0 && !isDragging;
+      const borderRadiusRem =
+        distFromFocus >= 1
+          ? borderRadius / scaleValue
+          : borderRadius -
+            (borderRadius - borderRadius / scaleValue) * distFromFocus;
+      const opacity = 0.8 + 0.2 * Math.max(0, 1 - Math.min(1, distFromFocus));
 
       nextStyle = {
         ...style,
         transform: toString(matrix),
+        opacity: isDragging ? opacity : style.opacity,
         transition: animate
           ? `transform ${duration}ms ease, opacity ${duration}ms ease, border-radius ${duration}ms ease`
           : "none",
-        borderRadius:
-          current === index
-            ? `${borderRadius}rem`
-            : `${borderRadius / scaleValue}rem`,
+        borderRadius: `${borderRadiusRem}rem`,
       };
     }
 
@@ -192,12 +244,7 @@ function recalculateTransforms() {
         (model.offsetWidth * scaleValue + margin) * delta
     )}px`;
     transforms.forEach((_, index) => {
-      const transform = getComputedStyle(model).transform;
-      transforms[index] = [
-        fromString(transform),
-        translate(model, index - delta),
-        scale(index === delta ? 1 : scaleValue),
-      ].reduce(multiply);
+      transforms[index] = transformForSlot(index);
     });
     transformsReady = true;
   }
